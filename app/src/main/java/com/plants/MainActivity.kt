@@ -1,21 +1,17 @@
 package com.plants
 
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
 import com.plants.navigation.PlantNavHost
 
 private const val TAG = "MainActivity"
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,8 +19,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                NativeMessageText(message = stringFromJNI())
-                PlantNavHost()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    PlantNavHost()
+                }
             }
         }
     }
@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         Log.d(TAG, "onStart Called")
     }
+
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume Called")
@@ -69,15 +70,5 @@ class MainActivity : ComponentActivity() {
         init {
             System.loadLibrary("plants")
         }
-    }
-}
-
-@Composable
-private fun NativeMessageText(message: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = message)
     }
 }
