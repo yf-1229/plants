@@ -27,40 +27,34 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-private data class ShapeOption(
+private data class CodeBlock(
     val label: String,
     val shape: Shape,
-    val colors: List<Color>
+    val color: Color
 )
 
-private data class CodeBlockUi(
-    val label: String,
-    val shape: Shape,
-    val colors: List<Color>
-)
 
-private val shapeOptions = listOf(
-    ShapeOption("Rectangle", RectangleShape, listOf(Color(0xFF9ED67D), Color(0xFF6BBF59))),
-    ShapeOption("Rounded", RoundedCornerShape(20.dp), listOf(Color(0xFF7FC9FF), Color(0xFF4AA5E8))),
-    ShapeOption("Cut", CutCornerShape(16.dp), listOf(Color(0xFFFFD27F), Color(0xFFFFB347))),
-    ShapeOption("Circle", CircleShape, listOf(Color(0xFFE5A8FF), Color(0xFFCB7FFF)))
+private val codeBlocks = listOf(
+    CodeBlock("Rectangle", RectangleShape, Color.Green),
+    CodeBlock("Rounded", RoundedCornerShape(20.dp), Color.Blue),
+    CodeBlock("Cut", CutCornerShape(16.dp), Color.Yellow),
+    CodeBlock("Circle", CircleShape, Color.Magenta)
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CodeScreen() {
-    val placedBlocks = remember {
+    val placedBlocks = remember { // TODO: move to viewmodel
         mutableStateListOf(
-            CodeBlockUi(
+            CodeBlock(
                 label = "Run",
                 shape = RectangleShape,
-                colors = listOf(Color(0xFF9ED67D), Color(0xFF6BBF59))
+                color = Color.Green
             )
         )
     }
@@ -83,13 +77,13 @@ fun CodeScreen() {
             )
 
             BottomShapeCarousel(
-                options = shapeOptions,
+                blocks = codeBlocks,
                 onShapeSelected = { selected ->
                     placedBlocks.add(
-                        CodeBlockUi(
+                        CodeBlock(
                             label = selected.label,
                             shape = selected.shape,
-                            colors = selected.colors
+                            color = selected.color
                         )
                     )
                 }
@@ -100,7 +94,7 @@ fun CodeScreen() {
 
 @Composable
 private fun CodeBlockList(
-    blocks: List<CodeBlockUi>,
+    blocks: List<CodeBlock>,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -117,7 +111,7 @@ private fun CodeBlockList(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Brush.horizontalGradient(block.colors))
+                        .background(block.color)
                         .padding(horizontal = 16.dp, vertical = 18.dp)
                 ) {
                     Text(
@@ -134,10 +128,10 @@ private fun CodeBlockList(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BottomShapeCarousel(
-    options: List<ShapeOption>,
-    onShapeSelected: (ShapeOption) -> Unit
+    blocks: List<CodeBlock>,
+    onShapeSelected: (CodeBlock) -> Unit
 ) {
-    val carouselState = rememberCarouselState { options.size }
+    val carouselState = rememberCarouselState { blocks.size }
 
     HorizontalMultiBrowseCarousel(
         state = carouselState,
@@ -148,7 +142,7 @@ private fun BottomShapeCarousel(
         itemSpacing = 12.dp,
         contentPadding = PaddingValues(horizontal = 20.dp)
     ) { index ->
-        val option = options[index]
+        val option = blocks[index]
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -159,7 +153,7 @@ private fun BottomShapeCarousel(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Brush.verticalGradient(option.colors)),
+                    .background(option.color),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
