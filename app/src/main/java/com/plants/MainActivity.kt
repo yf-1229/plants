@@ -8,8 +8,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,12 +23,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.plants.data.Plant
+import com.plants.data.PlantDatabase
 import com.plants.navigation.PlantNavHost
 import com.plants.ui.QrScannerMlKit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 private const val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
+
+    private val plantDao by lazy {
+        PlantDatabase.getDatabase(applicationContext).plantDao()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +48,8 @@ class MainActivity : ComponentActivity() {
                 ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
                 var hasPermission by remember { mutableStateOf(cameraPermissionGranted) }
+                var isScannerOpen by remember { mutableStateOf(true) }
+                val moisturePattern = remember { Regex("^Moisture[:：](\\d+)$") }
 
                 val launcher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
@@ -49,26 +62,53 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                Column(modifier = Modifier.fillMaxSize()) {
-                    if (hasPermission) {
-                        // スキャナ領域
-                        QrScannerMlKit(modifier = Modifier.weight(1f)) { value ->
-                            // 読み取り時の処理：ここで保存する（例：リストに追加）
-                            Toast.makeText(this@MainActivity, "Scanned: $value", Toast.LENGTH_SHORT)
-                                .show()
-
-                        }
-                    } else {
-                        Button(onClick = { launcher.launch(Manifest.permission.CAMERA) }) {
-                            Text("カメラ権限を許可する") // TODO: string resource
-                        }
-                    }
-                }
-
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
-                ) { PlantNavHost() }
+                ) {
+                    if (hasPermission && isScannerOpen) {
+                        QrScannerMlKit(modifier = Modifier.fillMaxSize()) { value ->
+                            val scannedValue = value.trim()
+                            val matchResult = moisturePattern.matchEntire(scannedValue)
+                            if (matchResult != null) {
+                                val parameterValue = matchResult.groupValues[1].toInt()
+                                lifecycleScope.launch(Dispatchers.IO) {
+                                    plantDao.insertPlant(
+                                        Plant(
+                                            name = scannedValue,
+                                            description = "Scanned QR code: $scannedValue",
+                                            parameter = parameterValue
+                                        )
+                                    )
+                                }
+                                isScannerOpen = false
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Scanned: $scannedValue",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Invalid QR code format: $scannedValue",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    } else if (hasPermission) {
+                        PlantNavHost() // <- go to main screen
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Button(onClick = { launcher.launch(Manifest.permission.CAMERA) }) {
+                                Text("カメラ権限を許可する") // TODO: string resource
+                            }
+                        }
+                    }
+                }
             }
         }
     }
