@@ -35,13 +35,13 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-private data class CodeBlock(
+
+data class CodeBlock(
     val label: String,
     val shape: Shape
 )
 
-
-private val codeBlocks = listOf(
+val codeBlocks = listOf(
     CodeBlock("Rectangle", RectangleShape),
     CodeBlock("Rounded", RoundedCornerShape(20.dp)),
     CodeBlock("Cut", CutCornerShape(16.dp)),
