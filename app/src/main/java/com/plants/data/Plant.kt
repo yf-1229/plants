@@ -8,6 +8,7 @@ data class Plant(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val name: String,
-    val description: String
+    val description: String,
+    val parameter: Int = 0
     // save with structure
 )
