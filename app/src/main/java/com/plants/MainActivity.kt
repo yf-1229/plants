@@ -30,6 +30,7 @@ import com.plants.navigation.PlantNavHost
 import com.plants.ui.QrScannerMlKit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private const val TAG = "MainActivity"
 
@@ -49,7 +50,6 @@ class MainActivity : ComponentActivity() {
 
                 var hasPermission by remember { mutableStateOf(cameraPermissionGranted) }
                 var isScannerOpen by remember { mutableStateOf(true) }
-                val moisturePattern = remember { Regex("^Moisture[:：](\\d+)$") }
 
                 val launcher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
@@ -69,28 +69,29 @@ class MainActivity : ComponentActivity() {
                     if (hasPermission && isScannerOpen) {
                         QrScannerMlKit(modifier = Modifier.fillMaxSize()) { value ->
                             val scannedValue = value.trim()
-                            val matchResult = moisturePattern.matchEntire(scannedValue)
-                            if (matchResult != null) {
-                                val parameterValue = matchResult.groupValues[1].toInt()
-                                lifecycleScope.launch(Dispatchers.IO) {
-                                    plantDao.insertPlant(
-                                        Plant(
-                                            name = scannedValue,
-                                            description = "Scanned QR code: $scannedValue",
-                                            parameter = parameterValue
+                            val parameterValue = scannedValue.toIntOrNull()
+                            if (parameterValue != null) {
+                                lifecycleScope.launch {
+                                    withContext(Dispatchers.IO) {
+                                        plantDao.insertPlant(
+                                            Plant(
+                                                name = scannedValue,
+                                                description = "Scanned QR code: $scannedValue",
+                                                parameter = parameterValue
+                                            )
                                         )
-                                    )
+                                    }
+                                    isScannerOpen = false
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        "Scanned: $scannedValue",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
-                                isScannerOpen = false
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    "Scanned: $scannedValue",
-                                    Toast.LENGTH_SHORT
-                                ).show()
                             } else {
                                 Toast.makeText(
                                     this@MainActivity,
-                                    "Invalid QR code format: $scannedValue",
+                                    "Please scan an integer value",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
