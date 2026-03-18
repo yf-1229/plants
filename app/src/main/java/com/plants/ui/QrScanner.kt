@@ -113,8 +113,3 @@ fun QrScannerMlKit(
         }
     }
 }
-
-@Composable
-fun QrScannerUI() {
-
-}
