@@ -8,19 +8,19 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(entities = [Plant::class], version = 2, exportSchema = false)
-abstract class PlantDatabase : RoomDatabase() {
+abstract class PlantsDatabase : RoomDatabase() {
 
     abstract fun plantDao(): PlantDao
 
     companion object {
         @Volatile
-        private var INSTANCE: PlantDatabase? = null
+        private var INSTANCE: PlantsDatabase? = null
 
-        fun getDatabase(context: Context): PlantDatabase {
+        fun getDatabase(context: Context): PlantsDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
-                    PlantDatabase::class.java,
+                    PlantsDatabase::class.java,
                     "plant_database"
                 ).addMigrations(MIGRATION_1_2) // TODO
                     .build()

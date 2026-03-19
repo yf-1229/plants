@@ -10,8 +10,9 @@ import com.plants.ui.CodeScreen
 import com.plants.ui.HomeScreen
 
 @Composable
-fun PlantNavHost(startDestinations: String = Destinations.Home.route) {
+fun PlantNavHost() {
     val navController = rememberNavController()
+    val startDestinations: String = Destinations.Home.route
 
     NavHost(
         navController = navController,

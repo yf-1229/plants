@@ -1,6 +1,7 @@
 package com.plants
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -24,8 +25,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.plants.data.AppContainer
+import com.plants.data.AppDataContainer
 import com.plants.data.Plant
-import com.plants.data.PlantDatabase
+import com.plants.data.PlantsDatabase
 import com.plants.navigation.PlantNavHost
 import com.plants.ui.QrScannerMlKit
 import kotlinx.coroutines.Dispatchers
@@ -37,16 +40,19 @@ private const val TAG = "MainActivity"
 class MainActivity : ComponentActivity() {
 
     private val plantDao by lazy {
-        PlantDatabase.getDatabase(applicationContext).plantDao()
+        PlantsDatabase.getDatabase(applicationContext).plantDao()
     }
+
+    lateinit var container: AppContainer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        container = AppDataContainer(this)
         setContent {
             MaterialTheme {
                 val cameraPermissionGranted = ContextCompat.checkSelfPermission(
                     this, Manifest.permission.CAMERA
-                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                ) == PackageManager.PERMISSION_GRANTED
 
                 var hasPermission by remember { mutableStateOf(cameraPermissionGranted) }
                 var isScannerOpen by remember { mutableStateOf(true) }
@@ -73,7 +79,7 @@ class MainActivity : ComponentActivity() {
                             if (parameterValue != null) {
                                 lifecycleScope.launch {
                                     withContext(Dispatchers.IO) {
-                                        plantDao.insertPlant(
+                                        plantDao.insert(
                                             Plant(
                                                 name = scannedValue,
                                                 description = "Scanned QR code: $scannedValue",
@@ -113,7 +119,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
+    
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "onStart Called")
