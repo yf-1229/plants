@@ -14,7 +14,7 @@ interface PlantDao {
     fun getAllPlants(): Flow<List<Plant>>
 
     @Query("SELECT * FROM plants WHERE id = :id")
-    suspend fun getPlant(id: Int): Flow<Plant?>
+    fun getPlant(id: Int): Flow<Plant?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(plant: Plant)
