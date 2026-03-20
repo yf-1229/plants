@@ -149,19 +149,4 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         Log.d(TAG, "onDestroy Called")
     }
-
-    /**
-     * A native method that is implemented by the 'plants' native library,
-     * which is packaged with this application.
-     */
-    external fun stringFromJNI(): String
-
-    companion object {
-        val container: Any
-
-        // Used to load the 'plants' library on application startup.
-        init {
-            System.loadLibrary("plants")
-        }
-    }
 }
