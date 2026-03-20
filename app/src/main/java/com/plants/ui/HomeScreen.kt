@@ -39,7 +39,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -51,7 +53,8 @@ import java.util.concurrent.Executors
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    onStartClick: () -> Unit = {}
+    onStartClick: () -> Unit = {},
+    viewModel: ViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),

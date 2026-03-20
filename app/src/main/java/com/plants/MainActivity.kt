@@ -157,6 +157,8 @@ class MainActivity : ComponentActivity() {
     external fun stringFromJNI(): String
 
     companion object {
+        val container: Any
+
         // Used to load the 'plants' library on application startup.
         init {
             System.loadLibrary("plants")
