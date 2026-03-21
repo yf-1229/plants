@@ -22,6 +22,12 @@ interface PlantsRepository {
     suspend fun insertPlant(item: Plant)
 
     /**
+     * Update item in the data source
+     */
+
+    suspend fun updatePlant(item: Plant)
+
+    /**
      * Delete item from the data source
      */
     suspend fun deletePlant(item: Plant)

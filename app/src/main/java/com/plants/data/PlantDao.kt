@@ -5,19 +5,23 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PlantDao {
 
     @Query("SELECT * FROM plants ORDER BY name ASC")
-    fun getAllPlants(): Flow<List<Plant>>
+    fun getAll(): Flow<List<Plant>>
 
     @Query("SELECT * FROM plants WHERE id = :id")
-    fun getPlant(id: Int): Flow<Plant?>
+    fun get(id: Int): Flow<Plant?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(plant: Plant)
+
+    @Update
+    suspend fun update(plant: Plant)
 
     @Delete
     suspend fun delete(plant: Plant)
