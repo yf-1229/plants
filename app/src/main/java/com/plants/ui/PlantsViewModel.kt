@@ -1,5 +1,8 @@
 package com.plants.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,6 +29,10 @@ class PlantsViewModel(
                 started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
                 initialValue = HomeUiState()
             )
+
+    var codeUiState by mutableStateOf(CodeUiState())
+        private set
+
 }
 
 private const val TIMEOUT_MILLIS = 5_000L
