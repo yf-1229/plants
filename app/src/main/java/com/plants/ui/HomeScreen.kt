@@ -1,52 +1,67 @@
 package com.plants.ui
 
-import android.annotation.SuppressLint
-import android.util.Log
-import android.view.ViewGroup
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.lifecycle.ProcessCameraProvider
+import android.graphics.PathEffect
+import android.os.VibrationEffect
+import android.os.Vibrator
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.common.InputImage
-import java.util.concurrent.Executors
+import com.plants.data.Plant
+import kotlinx.coroutines.delay
+import kotlin.jvm.java
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,32 +69,146 @@ import java.util.concurrent.Executors
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onStartClick: () -> Unit = {},
-    viewModel: ViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    viewModel: PlantsViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
+    val homeUiState by viewModel.homeUiState.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val coroutineScope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         color = MaterialTheme.colorScheme.background
+    ) {
+
+    }
+}
+
+@Composable
+private fun PlantList(
+    incompletePlantList: List<Plant>,
+    completedPlantList: List<Plant>,
+    completeItem: (Plant) -> Unit,
+    editStatus: (Plant) -> Unit,
+    deleteItem: (Plant) -> Unit,
+    selectedStatus: (Plant, CodeStatus) -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
+    Box {
+        var showDialog by remember { mutableStateOf(false) }
+        var selectedPlant by remember { mutableStateOf<Plant?>(null) }
+
+        val context = LocalContext.current
+        val vibrator = context.getSystemService(Vibrator::class.java)
+
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = contentPadding
+        ) {
+            // 未完了タスクを表示
+            items(
+                items = incompletePlantList,
+                key = { plant -> "incomplete_${plant.id}" }
+            ) { item ->
+                AnimatedVisibility(
+                    visible = true,
+                    enter = slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ) + fadeIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ),
+                    exit = slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ) + fadeOut(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ),
+
+                    ) {
+                    PiNodeItem(
+                        item = item,
+                        onItemTap = { node ->
+                            selectedNode = node
+                            showDialog = true
+                        },
+
+                        editStatus = { node -> editStatus(node) },
+                        deleteItem = { node -> deleteItem(node) },
+                        showDialog = false
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PlantItem(
+    item: Plant,
+    onItemTap: (Plant) -> Unit,
+    deleteItem: (Plant) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 一定間隔で更新???
+    LaunchedEffect(key1 = Unit) {
+        while (true) {
+            delay(100)
+
+        }
+    }
+
+    OutlinedCard(
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface,
+        ),
+        border = BorderStroke(1.dp, Color.White),
+        modifier = Modifier
+            .padding(bottom = 6.dp)
+            .fillMaxWidth()
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                onItemTap(item)
+            }
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 32.dp, bottom = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .padding(6.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            // ここでRowを使って左右に分ける
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Home Screen")
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = onStartClick) {
-                    Text(text = "Start")
-                }
-                Spacer(modifier = Modifier.height(16.dp))
+
             }
+            Text( // title
+                text = item.name,
+                color = Color.White,
+                fontSize = 32.sp,
+                modifier = Modifier.padding(start = 8.dp),
+                style = TextStyle.Default.copy(
+                    lineBreak = LineBreak.Heading
+                )
+            )
+            // TODO Sub Todo List
         }
     }
 }
