@@ -37,19 +37,30 @@ class PlantsViewModel(
         private set
 
 
-    fun savePlant() {
-        viewModelScope.launch {
-            try {
-                val newPlant = Plant(
-
-                )
-                plantsRepository.insertPlant(newPlant)
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Failed to create plant", e)
-            }
+    suspend fun savePlant() {
+        if (validateInput()) {
+            plantsRepository.insertPlant(codeUiState.codeDetails.toPlant())
         }
     }
 
+    private fun validateInput(uiState: CodeDetails = codeUiState.codeDetails): Boolean {
+        return with(uiState) {
+            title.isNotBlank()
+        }
+    }
+
+    suspend fun updateCode() {
+        if (validateInput(codeUiState.codeDetails)) {
+            plantsRepository.updatePlant(codeUiState.codeDetails.toPlant())
+        }
+    }
+
+    fun updateUiState(codeDetails: CodeDetails) {
+        codeUiState = CodeUiState(
+            codeDetails = codeDetails,
+            isEntryValid = validateInput(codeDetails)
+        )
+    }
 
     fun deletePlant(id: Int) {
         viewModelScope.launch {
@@ -88,6 +99,40 @@ data class HomeUiState(
 )
 
 data class CodeUiState(
-    val plant: Plant? = null,
-    val title: String = ""
+    val codeDetails: CodeDetails = CodeDetails(),
+    val isEntryValid: Boolean = false,
 )
+
+data class CodeDetails(
+    val id: Int = 0,
+    val title: String = "",
+    val parameter: Int = 0,
+    val description: String = "",
+)
+
+fun CodeDetails.toPlant(): Plant {
+    return Plant(
+        id = id,
+        name = title,
+        description = description,
+        parameter = parameter
+    )
+}
+
+fun Plant.toCodeUiState(): CodeDetails {
+    return CodeDetails(
+        id = id,
+        title = name,
+        description = description,
+        parameter = parameter
+    )
+}
+
+fun Plant.toCodeDetails(): CodeDetails {
+    return CodeDetails(
+        id = id,
+        title = name,
+        description = description,
+        parameter = parameter
+    )
+}
