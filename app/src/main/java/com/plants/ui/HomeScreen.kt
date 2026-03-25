@@ -89,7 +89,10 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(12.dp))
             PlantList(
                 incompletePlantList = homeUiState.plantList,
-                onItemTap = { onStartClick() },
+                onItemTap = { plant ->
+                    viewModel.updateId(plant.id)
+                    onStartClick()
+                },
                 contentPadding = PaddingValues(bottom = 24.dp),
                 modifier = Modifier.fillMaxSize()
             )
@@ -124,7 +127,6 @@ private fun PlantList(
                 PlantItem(
                     item = item,
                     onItemTap = onItemTap,
-                    deleteItem = {},
                 )
             }
         }
@@ -135,7 +137,6 @@ private fun PlantList(
 fun PlantItem(
     item: Plant,
     onItemTap: (Plant) -> Unit,
-    deleteItem: (Plant) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // 一定間隔で更新???
