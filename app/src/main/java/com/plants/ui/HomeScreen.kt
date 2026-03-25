@@ -80,17 +80,30 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         color = MaterialTheme.colorScheme.background
     ) {
-
+        Column(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 24.dp)
+        ) {
+            Button(onClick = onStartClick) {
+                Text(text = "分析をはじめる")
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            PlantList(
+                incompletePlantList = homeUiState.plantList,
+                onItemTap = { plant ->
+                    viewModel.updateId(plant.id)
+                    onStartClick()
+                },
+                contentPadding = PaddingValues(bottom = 24.dp),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
 @Composable
 private fun PlantList(
     incompletePlantList: List<Plant>,
-    completedPlantList: List<Plant>,
-    completeItem: (Plant) -> Unit,
-    editStatus: (Plant) -> Unit,
-    deleteItem: (Plant) -> Unit,
+    onItemTap: (Plant) -> Unit,
     // selectedStatus: (Plant, CodeStatus) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
@@ -111,7 +124,10 @@ private fun PlantList(
                 items = incompletePlantList,
                 key = { plant -> "incomplete_${plant.id}" }
             ) { item ->
-                // TODO
+                PlantItem(
+                    item = item,
+                    onItemTap = onItemTap,
+                )
             }
         }
     }
@@ -121,7 +137,6 @@ private fun PlantList(
 fun PlantItem(
     item: Plant,
     onItemTap: (Plant) -> Unit,
-    deleteItem: (Plant) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // 一定間隔で更新???
