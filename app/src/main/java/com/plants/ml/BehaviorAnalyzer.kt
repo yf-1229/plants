@@ -1,8 +1,7 @@
 package com.plants.ml
 
-import com.example.generateblock.model.BehaviorMetrics
-import com.example.generateblock.model.Block
-import com.example.generateblock.model.BlockType
+import com.plants.data.Block
+import com.plants.data.BlockType
 
 /**
  * Analyzes behavioral properties of each block in a sequence.

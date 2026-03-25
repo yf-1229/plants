@@ -1,6 +1,6 @@
 package com.plants.ml
 
-import com.example.generateblock.model.BlockType
+import com.plants.data.BlockType
 
 /**
  * Bigram (n=2) next-block predictor trained on example Scratch-like programs.

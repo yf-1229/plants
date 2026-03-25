@@ -2,6 +2,7 @@ package com.plants.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(tableName = "plants")
 data class Plant(
@@ -9,6 +10,7 @@ data class Plant(
     val id: Int = 0,
     val name: String,
     val description: String,
+    val parameter: Int = 0,
 )
 
 enum class BlockType(val label: String, val color: Long) {
