@@ -89,10 +89,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(12.dp))
             PlantList(
                 incompletePlantList = homeUiState.plantList,
-                completedPlantList = emptyList(),
-                completeItem = {},
-                editStatus = {},
-                deleteItem = {},
+                onItemTap = { onStartClick() },
                 contentPadding = PaddingValues(bottom = 24.dp),
                 modifier = Modifier.fillMaxSize()
             )
@@ -103,10 +100,7 @@ fun HomeScreen(
 @Composable
 private fun PlantList(
     incompletePlantList: List<Plant>,
-    completedPlantList: List<Plant>,
-    completeItem: (Plant) -> Unit,
-    editStatus: (Plant) -> Unit,
-    deleteItem: (Plant) -> Unit,
+    onItemTap: (Plant) -> Unit,
     // selectedStatus: (Plant, CodeStatus) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
@@ -129,8 +123,8 @@ private fun PlantList(
             ) { item ->
                 PlantItem(
                     item = item,
-                    onItemTap = editStatus,
-                    deleteItem = deleteItem,
+                    onItemTap = onItemTap,
+                    deleteItem = {},
                 )
             }
         }
