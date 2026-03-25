@@ -1,16 +1,26 @@
 package com.plants.ui
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.plants.data.Block
+import com.plants.data.BlockType
 import com.plants.data.Plant
 import com.plants.data.PlantsRepository
+import com.plants.ml.CodeAnalysisParams
+import com.plants.ml.LiteRTCodeAnalyzer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -36,6 +46,54 @@ class PlantsViewModel(
     var codeUiState by mutableStateOf(CodeUiState())
         private set
 
+    // -------------------------------------------------------------------------
+    // Code-editor block state
+    // -------------------------------------------------------------------------
+
+    /** The sequence of blocks currently placed in the code editor. */
+    val placedBlocks: SnapshotStateList<Block> = mutableStateListOf(
+        Block(type = BlockType.MOVE)
+    )
+
+    /** Appends a new block of [blockType] to the placed sequence. */
+    fun addBlock(blockType: BlockType) {
+        placedBlocks.add(Block(type = blockType))
+    }
+
+    /** Removes the last placed block (minimum one block is always kept). */
+    fun removeLastBlock() {
+        if (placedBlocks.size > 1) placedBlocks.removeLastOrNull()
+    }
+
+    // -------------------------------------------------------------------------
+    // LiteRT analysis
+    // -------------------------------------------------------------------------
+
+    private val _analysisParams = MutableStateFlow<CodeAnalysisParams?>(null)
+
+    /** Latest analysis result; null until [analyzeBlocks] has been called. */
+    val analysisParams: StateFlow<CodeAnalysisParams?> = _analysisParams.asStateFlow()
+
+    /**
+     * Runs 行動性/冗長性 analysis on the current [placedBlocks] sequence using
+     * [LiteRTCodeAnalyzer] (with automatic rule-based fallback) and updates
+     * [analysisParams].
+     *
+     * Runs on [Dispatchers.Default] so as not to block the UI thread.
+     */
+    fun analyzeBlocks(context: Context) {
+        val snapshot = placedBlocks.toList()
+        viewModelScope.launch(Dispatchers.Default) {
+            val analyzer = LiteRTCodeAnalyzer(context.applicationContext)
+            try {
+                _analysisParams.value = analyzer.analyze(snapshot)
+            } catch (e: Exception) {
+                Log.e("PlantsViewModel", "analyzeBlocks failed", e)
+            } finally {
+                analyzer.close()
+            }
+        }
+    }
 
     suspend fun savePlant() {
         if (validateInput()) {
@@ -107,6 +165,7 @@ data class CodeDetails(
     val id: Int = 0,
     val title: String = "",
     val description: String = "",
+    val parameter: Int = 0,
 )
 
 fun CodeDetails.toPlant(): Plant {
@@ -114,6 +173,7 @@ fun CodeDetails.toPlant(): Plant {
         id = id,
         name = title,
         description = description,
+        parameter = parameter,
     )
 }
 
@@ -122,6 +182,7 @@ fun Plant.toCodeUiState(): CodeDetails {
         id = id,
         title = name,
         description = description,
+        parameter = parameter,
     )
 }
 
@@ -130,5 +191,6 @@ fun Plant.toCodeDetails(): CodeDetails {
         id = id,
         title = name,
         description = description,
+        parameter = parameter,
     )
 }
