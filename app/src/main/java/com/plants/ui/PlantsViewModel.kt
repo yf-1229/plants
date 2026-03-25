@@ -106,7 +106,6 @@ data class CodeUiState(
 data class CodeDetails(
     val id: Int = 0,
     val title: String = "",
-    val parameter: Int = 0,
     val description: String = "",
 )
 
@@ -115,7 +114,6 @@ fun CodeDetails.toPlant(): Plant {
         id = id,
         name = title,
         description = description,
-        parameter = parameter
     )
 }
 
@@ -124,7 +122,6 @@ fun Plant.toCodeUiState(): CodeDetails {
         id = id,
         title = name,
         description = description,
-        parameter = parameter
     )
 }
 
@@ -133,6 +130,5 @@ fun Plant.toCodeDetails(): CodeDetails {
         id = id,
         title = name,
         description = description,
-        parameter = parameter
     )
 }
