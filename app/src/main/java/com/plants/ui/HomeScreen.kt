@@ -1,7 +1,19 @@
 package com.plants.ui
 
+import android.graphics.PathEffect
+import android.os.VibrationEffect
+import android.os.Vibrator
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,83 +25,190 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.carousel.CarouselDefaults
-import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
-import androidx.compose.material3.carousel.rememberCarouselState
-
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.plants.data.Plant
+import kotlinx.coroutines.delay
+import kotlin.jvm.java
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    onStartClick: () -> Unit = {}
+    onStartClick: () -> Unit = {},
+    viewModel: PlantsViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
+    val homeUiState by viewModel.homeUiState.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val coroutineScope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
 
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 32.dp, bottom = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+
+    }
+}
+
+@Composable
+private fun PlantList(
+    incompletePlantList: List<Plant>,
+    completedPlantList: List<Plant>,
+    completeItem: (Plant) -> Unit,
+    editStatus: (Plant) -> Unit,
+    deleteItem: (Plant) -> Unit,
+    selectedStatus: (Plant, CodeStatus) -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
+    Box {
+        var showDialog by remember { mutableStateOf(false) }
+        var selectedPlant by remember { mutableStateOf<Plant?>(null) }
+
+        val context = LocalContext.current
+        val vibrator = context.getSystemService(Vibrator::class.java)
+
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = contentPadding
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(text = "Home Screen")
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = onStartClick) {
-                    Text(text = "Start")
+            // 未完了タスクを表示
+            items(
+                items = incompletePlantList,
+                key = { plant -> "incomplete_${plant.id}" }
+            ) { item ->
+                AnimatedVisibility(
+                    visible = true,
+                    enter = slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ) + fadeIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ),
+                    exit = slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ) + fadeOut(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ),
+
+                    ) {
+                    PiNodeItem(
+                        item = item,
+                        onItemTap = { node ->
+                            selectedNode = node
+                            showDialog = true
+                        },
+
+                        editStatus = { node -> editStatus(node) },
+                        deleteItem = { node -> deleteItem(node) },
+                        showDialog = false
+                    )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                EmptyIndicator()
             }
         }
     }
 }
 
 @Composable
-private fun EmptyIndicator(
-    count: Int = 3
+fun PlantItem(
+    item: Plant,
+    onItemTap: (Plant) -> Unit,
+    deleteItem: (Plant) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(count) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(Color.Transparent)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        shape = CircleShape
-                    )
+    // 一定間隔で更新???
+    LaunchedEffect(key1 = Unit) {
+        while (true) {
+            delay(100)
+
+        }
+    }
+
+    OutlinedCard(
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface,
+        ),
+        border = BorderStroke(1.dp, Color.White),
+        modifier = Modifier
+            .padding(bottom = 6.dp)
+            .fillMaxWidth()
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                onItemTap(item)
+            }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(6.dp)
+        ) {
+            // ここでRowを使って左右に分ける
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+            }
+            Text( // title
+                text = item.name,
+                color = Color.White,
+                fontSize = 32.sp,
+                modifier = Modifier.padding(start = 8.dp),
+                style = TextStyle.Default.copy(
+                    lineBreak = LineBreak.Heading
+                )
             )
+            // TODO Sub Todo List
         }
     }
 }
