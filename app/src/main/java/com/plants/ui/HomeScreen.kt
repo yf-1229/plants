@@ -91,7 +91,7 @@ private fun PlantList(
     completeItem: (Plant) -> Unit,
     editStatus: (Plant) -> Unit,
     deleteItem: (Plant) -> Unit,
-    selectedStatus: (Plant, CodeStatus) -> Unit,
+    // selectedStatus: (Plant, CodeStatus) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
@@ -139,17 +139,7 @@ private fun PlantList(
                     ),
 
                     ) {
-                    PiNodeItem(
-                        item = item,
-                        onItemTap = { node ->
-                            selectedNode = node
-                            showDialog = true
-                        },
 
-                        editStatus = { node -> editStatus(node) },
-                        deleteItem = { node -> deleteItem(node) },
-                        showDialog = false
-                    )
                 }
             }
         }

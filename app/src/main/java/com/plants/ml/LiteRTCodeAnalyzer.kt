@@ -2,15 +2,15 @@ package com.plants.ml
 
 import android.content.Context
 import android.util.Log
-import com.google.ai.edge.litert.Interpreter
 import com.plants.data.Block
 import com.plants.data.BlockType
+import org.tensorflow.lite.Interpreter
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
- * Analyses a block sequence for 行動性 (activity) and 冗長性 (redundancy) using
+ * Analyzes a block sequence for 行動性 (activity) and 冗長性 (redundancy) using
  * the LiteRT (formerly TensorFlow Lite) on-device runtime.
  *
  * When a compatible model file is bundled at `assets/code_analyzer.tflite` the
