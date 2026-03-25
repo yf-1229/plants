@@ -80,7 +80,23 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         color = MaterialTheme.colorScheme.background
     ) {
-
+        Column(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 24.dp)
+        ) {
+            Button(onClick = onStartClick) {
+                Text(text = "分析をはじめる")
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            PlantList(
+                incompletePlantList = homeUiState.plantList,
+                completedPlantList = emptyList(),
+                completeItem = {},
+                editStatus = {},
+                deleteItem = {},
+                contentPadding = PaddingValues(bottom = 24.dp),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
@@ -111,7 +127,11 @@ private fun PlantList(
                 items = incompletePlantList,
                 key = { plant -> "incomplete_${plant.id}" }
             ) { item ->
-                // TODO
+                PlantItem(
+                    item = item,
+                    onItemTap = editStatus,
+                    deleteItem = deleteItem,
+                )
             }
         }
     }
