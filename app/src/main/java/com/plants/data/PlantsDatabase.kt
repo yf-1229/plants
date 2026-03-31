@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Plant::class], version = 2, exportSchema = false)
+@Database(entities = [Plant::class], version = 3, exportSchema = false)
 abstract class PlantsDatabase : RoomDatabase() {
 
     abstract fun plantDao(): PlantDao

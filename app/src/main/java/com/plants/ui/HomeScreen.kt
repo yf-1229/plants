@@ -80,18 +80,31 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         color = MaterialTheme.colorScheme.background
     ) {
-
+        Column(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 24.dp)
+        ) {
+            Button(onClick = onStartClick) {
+                Text(text = "分析をはじめる")
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            PlantList(
+                incompletePlantList = homeUiState.plantList,
+                onItemTap = { plant ->
+                    viewModel.updateId(plant.id)
+                    onStartClick()
+                },
+                contentPadding = PaddingValues(bottom = 24.dp),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
 @Composable
 private fun PlantList(
     incompletePlantList: List<Plant>,
-    completedPlantList: List<Plant>,
-    completeItem: (Plant) -> Unit,
-    editStatus: (Plant) -> Unit,
-    deleteItem: (Plant) -> Unit,
-    selectedStatus: (Plant, CodeStatus) -> Unit,
+    onItemTap: (Plant) -> Unit,
+    // selectedStatus: (Plant, CodeStatus) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
@@ -111,46 +124,10 @@ private fun PlantList(
                 items = incompletePlantList,
                 key = { plant -> "incomplete_${plant.id}" }
             ) { item ->
-                AnimatedVisibility(
-                    visible = true,
-                    enter = slideInVertically(
-                        initialOffsetY = { it },
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    ) + fadeIn(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    ),
-                    exit = slideOutVertically(
-                        targetOffsetY = { -it },
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    ) + fadeOut(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    ),
-
-                    ) {
-                    PiNodeItem(
-                        item = item,
-                        onItemTap = { node ->
-                            selectedNode = node
-                            showDialog = true
-                        },
-
-                        editStatus = { node -> editStatus(node) },
-                        deleteItem = { node -> deleteItem(node) },
-                        showDialog = false
-                    )
-                }
+                PlantItem(
+                    item = item,
+                    onItemTap = onItemTap,
+                )
             }
         }
     }
@@ -160,7 +137,6 @@ private fun PlantList(
 fun PlantItem(
     item: Plant,
     onItemTap: (Plant) -> Unit,
-    deleteItem: (Plant) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // 一定間隔で更新???

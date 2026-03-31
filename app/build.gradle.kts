@@ -38,6 +38,9 @@ android {
     buildFeatures {
         compose = true
     }
+    androidResources {
+        noCompress += "tflite"
+    }
 }
 
 dependencies {
@@ -66,6 +69,8 @@ dependencies {
 
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
+
+    implementation(libs.litert)
 
     implementation("androidx.camera:camera-core:1.4.2")
     implementation("androidx.camera:camera-camera2:1.4.2")
