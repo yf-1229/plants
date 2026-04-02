@@ -4,6 +4,10 @@ const logOutput = document.getElementById('logOutput');
 const convertBtn = document.getElementById('convertBtn');
 const executeBtn = document.getElementById('executeBtn');
 const emergencyBtn = document.getElementById('emergencyBtn');
+const telemetrySpeed = document.getElementById('telemetrySpeed');
+const telemetryBattery = document.getElementById('telemetryBattery');
+const telemetryTime = document.getElementById('telemetryTime');
+const telemetryWifi = document.getElementById('telemetryWifi');
 
 Blockly.defineBlocksWithJsonArray([
   {
@@ -19,6 +23,29 @@ Blockly.defineBlocksWithJsonArray([
     previousStatement: null,
     nextStatement: null,
     colour: 200
+  },
+  {
+    type: 'tello_repeat',
+    message0: '繰り返し %1 回',
+    args0: [
+      {
+        type: 'field_number',
+        name: 'TIMES',
+        value: 2,
+        min: 1,
+        max: 20
+      }
+    ],
+    message1: '%1',
+    args1: [
+      {
+        type: 'input_statement',
+        name: 'DO'
+      }
+    ],
+    previousStatement: null,
+    nextStatement: null,
+    colour: 180
   },
   {
     type: 'tello_rotate',
@@ -45,27 +72,66 @@ Blockly.defineBlocksWithJsonArray([
     colour: 220
   },
   {
-    type: 'tello_move',
-    message0: '移動 %1 距離 %2 cm',
+    type: 'tello_left',
+    message0: '左に %1 cm 移動',
+    args0: [{ type: 'field_number', name: 'DISTANCE', value: 50, min: 20, max: 500 }],
+    previousStatement: null,
+    nextStatement: null,
+    colour: 240
+  },
+  {
+    type: 'tello_right',
+    message0: '右に %1 cm 移動',
+    args0: [{ type: 'field_number', name: 'DISTANCE', value: 50, min: 20, max: 500 }],
+    previousStatement: null,
+    nextStatement: null,
+    colour: 240
+  },
+  {
+    type: 'tello_forward',
+    message0: '前に %1 cm 移動',
+    args0: [{ type: 'field_number', name: 'DISTANCE', value: 50, min: 20, max: 500 }],
+    previousStatement: null,
+    nextStatement: null,
+    colour: 240
+  },
+  {
+    type: 'tello_back',
+    message0: '後ろに %1 cm 移動',
+    args0: [{ type: 'field_number', name: 'DISTANCE', value: 50, min: 20, max: 500 }],
+    previousStatement: null,
+    nextStatement: null,
+    colour: 240
+  },
+  {
+    type: 'tello_up',
+    message0: '%1 cm 上昇',
+    args0: [{ type: 'field_number', name: 'DISTANCE', value: 50, min: 20, max: 500 }],
+    previousStatement: null,
+    nextStatement: null,
+    colour: 240
+  },
+  {
+    type: 'tello_down',
+    message0: '%1 cm 下降',
+    args0: [{ type: 'field_number', name: 'DISTANCE', value: 50, min: 20, max: 500 }],
+    previousStatement: null,
+    nextStatement: null,
+    colour: 240
+  },
+  {
+    type: 'tello_flip',
+    message0: '%1 方向に反転',
     args0: [
       {
         type: 'field_dropdown',
         name: 'DIRECTION',
         options: [
-          ['前', 'forward'],
-          ['後', 'back'],
-          ['左', 'left'],
-          ['右', 'right'],
-          ['上', 'up'],
-          ['下', 'down']
+          ['左', 'l'],
+          ['右', 'r'],
+          ['前', 'f'],
+          ['後ろ', 'b']
         ]
-      },
-      {
-        type: 'field_number',
-        name: 'DISTANCE',
-        value: 50,
-        min: 20,
-        max: 500
       }
     ],
     previousStatement: null,
@@ -79,7 +145,7 @@ Blockly.defineBlocksWithJsonArray([
       {
         type: 'field_number',
         name: 'SECONDS',
-        value: 3,
+        value: 1,
         min: 1,
         max: 30
       }
@@ -117,28 +183,53 @@ function collectCommands() {
 
   const commands = [];
   for (const top of topBlocks) {
-    let current = top;
-    while (current) {
-      if (current.type === 'tello_takeoff') {
-        commands.push('takeoff');
-      } else if (current.type === 'tello_land') {
-        commands.push('land');
-      } else if (current.type === 'tello_rotate') {
-        const direction = current.getFieldValue('DIRECTION');
-        const degree = Number(current.getFieldValue('DEGREE'));
-        commands.push(`${direction} ${degree}`);
-      } else if (current.type === 'tello_move') {
-        const direction = current.getFieldValue('DIRECTION');
-        const distance = Number(current.getFieldValue('DISTANCE'));
-        commands.push(`${direction} ${distance}`);
-      } else if (current.type === 'tello_wait') {
-        const seconds = Number(current.getFieldValue('SECONDS'));
-        commands.push(`wait ${seconds}`);
-      }
-      current = current.getNextBlock();
-    }
+    commands.push(...collectCommandsFromChain(top));
   }
 
+  return commands;
+}
+
+function collectCommandsFromChain(startBlock) {
+  const commands = [];
+  let current = startBlock;
+  while (current) {
+    if (current.type === 'tello_takeoff') {
+      commands.push('takeoff');
+    } else if (current.type === 'tello_land') {
+      commands.push('land');
+    } else if (current.type === 'tello_rotate') {
+      const direction = current.getFieldValue('DIRECTION');
+      const degree = Number(current.getFieldValue('DEGREE'));
+      commands.push(`${direction} ${degree}`);
+    } else if (current.type === 'tello_left') {
+      commands.push(`left ${Number(current.getFieldValue('DISTANCE'))}`);
+    } else if (current.type === 'tello_right') {
+      commands.push(`right ${Number(current.getFieldValue('DISTANCE'))}`);
+    } else if (current.type === 'tello_forward') {
+      commands.push(`forward ${Number(current.getFieldValue('DISTANCE'))}`);
+    } else if (current.type === 'tello_back') {
+      commands.push(`back ${Number(current.getFieldValue('DISTANCE'))}`);
+    } else if (current.type === 'tello_up') {
+      commands.push(`up ${Number(current.getFieldValue('DISTANCE'))}`);
+    } else if (current.type === 'tello_down') {
+      commands.push(`down ${Number(current.getFieldValue('DISTANCE'))}`);
+    } else if (current.type === 'tello_flip') {
+      commands.push(`flip ${current.getFieldValue('DIRECTION')}`);
+    } else if (current.type === 'tello_wait') {
+      const seconds = Number(current.getFieldValue('SECONDS'));
+      commands.push(`wait ${seconds}`);
+    } else if (current.type === 'tello_repeat') {
+      const times = Number(current.getFieldValue('TIMES'));
+      const statement = current.getInputTargetBlock('DO');
+      if (statement && Number.isFinite(times) && times > 0) {
+        const repeated = collectCommandsFromChain(statement);
+        for (let i = 0; i < times; i += 1) {
+          commands.push(...repeated);
+        }
+      }
+    }
+    current = current.getNextBlock();
+  }
   return commands;
 }
 
@@ -168,6 +259,11 @@ ws.addEventListener('message', (event) => {
       }
     } else if (data.type === 'error') {
       appendLog(`エラー: ${data.message}`);
+    } else if (data.type === 'telemetry') {
+      telemetrySpeed.textContent = data.telemetry?.speed ?? '--';
+      telemetryBattery.textContent = data.telemetry?.battery ?? '--';
+      telemetryTime.textContent = data.telemetry?.time ?? '--';
+      telemetryWifi.textContent = data.telemetry?.wifi ?? '--';
     }
   } catch {
     appendLog(`受信: ${event.data}`);

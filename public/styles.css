@@ -9,11 +9,28 @@ body {
   color: #101418;
 }
 
+.telemetry-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 12px;
+  background: #101418;
+  color: #fff;
+}
+
+.telemetry-item {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
 .container {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 100vh;
+  min-height: calc(100vh - 72px);
   padding: 12px;
 }
 
@@ -86,4 +103,10 @@ button#emergencyBtn {
 
 #logOutput {
   white-space: pre-wrap;
+}
+
+@media (min-width: 720px) {
+  .telemetry-bar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
