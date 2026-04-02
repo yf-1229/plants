@@ -71,6 +71,22 @@ Blockly.defineBlocksWithJsonArray([
     previousStatement: null,
     nextStatement: null,
     colour: 240
+  },
+  {
+    type: 'tello_wait',
+    message0: '待機 %1 秒',
+    args0: [
+      {
+        type: 'field_number',
+        name: 'SECONDS',
+        value: 3,
+        min: 1,
+        max: 30
+      }
+    ],
+    previousStatement: null,
+    nextStatement: null,
+    colour: 260
   }
 ]);
 
@@ -115,6 +131,9 @@ function collectCommands() {
         const direction = current.getFieldValue('DIRECTION');
         const distance = Number(current.getFieldValue('DISTANCE'));
         commands.push(`${direction} ${distance}`);
+      } else if (current.type === 'tello_wait') {
+        const seconds = Number(current.getFieldValue('SECONDS'));
+        commands.push(`wait ${seconds}`);
       }
       current = current.getNextBlock();
     }
