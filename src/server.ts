@@ -10,7 +10,7 @@ const port = Number(process.env.PORT ?? 3000);
 const telloHost = process.env.TELLO_HOST ?? '192.168.10.1';
 const telloPort = Number(process.env.TELLO_PORT ?? 8889);
 const localUdpPort = Number(process.env.LOCAL_UDP_PORT ?? 9000);
-const defaultCommandIntervalMs = Number(process.env.DEFAULT_COMMAND_INTERVAL_MS ?? 3000);
+const defaultCommandIntervalMs = Number(process.env.DEFAULT_COMMAND_INTERVAL_MS ?? 1000);
 
 const udpSocket = dgram.createSocket('udp4');
 let udpQueue: Promise<void> = Promise.resolve();
@@ -61,7 +61,7 @@ function sendUdpCommand(command: string, timeoutMs = 5000): Promise<string> {
   return result;
 }
 
-const allowedPattern = /^(command|takeoff|land|stop|emergency|cw\s\d+|ccw\s\d+|forward\s\d+|back\s\d+|left\s\d+|right\s\d+|up\s\d+|down\s\d+|flip\s[lrfb]|wait\s\d+)$/;
+const allowedPattern = /^(command|takeoff|land|stop|emergency|speed\?|battery\?|time\?|wifi\?|cw\s\d+|ccw\s\d+|forward\s\d+|back\s\d+|left\s\d+|right\s\d+|up\s\d+|down\s\d+|flip\s[lrfb]|wait\s\d+)$/;
 
 function isCommandAllowed(command: string): boolean {
   return allowedPattern.test(command.trim());
@@ -132,9 +132,51 @@ const server = app.listen(port, '0.0.0.0', () => {
 });
 
 const wss = new WebSocketServer({ server, path: '/ws' });
+const telemetryState: Record<string, string> = {
+  speed: '--',
+  battery: '--',
+  time: '--',
+  wifi: '--'
+};
+let activeExecutions = 0;
+
+function broadcastTelemetry() {
+  const message = JSON.stringify({ type: 'telemetry', telemetry: telemetryState });
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
+
+async function updateTelemetry() {
+  if (activeExecutions > 0 || wss.clients.size === 0) {
+    return;
+  }
+  const telemetryCommands: Array<{ key: string; command: string }> = [
+    { key: 'speed', command: 'speed?' },
+    { key: 'battery', command: 'battery?' },
+    { key: 'time', command: 'time?' },
+    { key: 'wifi', command: 'wifi?' }
+  ];
+  for (const { key, command } of telemetryCommands) {
+    try {
+      const response = await sendUdpCommand(command);
+      telemetryState[key] = response;
+    } catch {
+      telemetryState[key] = '--';
+    }
+  }
+  broadcastTelemetry();
+}
+
+setInterval(() => {
+  void updateTelemetry();
+}, 3000);
 
 wss.on('connection', (ws: WebSocket) => {
   ws.send(JSON.stringify({ type: 'status', message: 'connected' }));
+  ws.send(JSON.stringify({ type: 'telemetry', telemetry: telemetryState }));
 
   ws.on('message', async (raw) => {
     try {
@@ -154,30 +196,35 @@ wss.on('connection', (ws: WebSocket) => {
 
       const executionList = commands[0] === 'command' ? commands : ['command', ...commands];
       const results: Array<{ command: string; response: string }> = [];
+      activeExecutions += 1;
 
-      for (let i = 0; i < executionList.length; i += 1) {
-        const command = executionList[i];
-        const waitSeconds = parseWaitSeconds(command);
-        if (waitSeconds !== null) {
-          await sleep(waitSeconds * 1000);
-          results.push({ command, response: `ok (wait ${waitSeconds}s)` });
-          continue;
-        }
+      try {
+        for (let i = 0; i < executionList.length; i += 1) {
+          const command = executionList[i];
+          const waitSeconds = parseWaitSeconds(command);
+          if (waitSeconds !== null) {
+            await sleep(waitSeconds * 1000);
+            results.push({ command, response: `ok (wait ${waitSeconds}s)` });
+            continue;
+          }
 
-        try {
-          const response = await sendUdpCommand(command);
-          results.push({ command, response });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Command execution failed';
-          results.push({ command, response: `error: ${message}` });
-          if (command === 'emergency') {
-            throw error;
+          try {
+            const response = await sendUdpCommand(command);
+            results.push({ command, response });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Command execution failed';
+            results.push({ command, response: `error: ${message}` });
+            if (command === 'emergency') {
+              throw error;
+            }
+          }
+
+          if (i < executionList.length - 1) {
+            await sleep(defaultCommandIntervalMs);
           }
         }
-
-        if (i < executionList.length - 1) {
-          await sleep(defaultCommandIntervalMs);
-        }
+      } finally {
+        activeExecutions = Math.max(0, activeExecutions - 1);
       }
 
       ws.send(JSON.stringify({ type: 'result', results }));
