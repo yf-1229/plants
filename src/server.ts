@@ -1,12 +1,8 @@
 import dgram from 'node:dgram';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import express from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
