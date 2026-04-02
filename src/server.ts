@@ -63,13 +63,13 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function parseWaitMs(command: string): number | null {
+function parseWaitSeconds(command: string): number | null {
   const match = /^wait\s+(\d+)$/.exec(command.trim());
   if (!match) {
     return null;
   }
   const seconds = Number(match[1]);
-  return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : null;
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
 }
 
 app.use('/vendor/blockly', express.static(path.join(__dirname, '..', 'node_modules', 'blockly')));
@@ -118,10 +118,10 @@ wss.on('connection', (ws: WebSocket) => {
 
       for (let i = 0; i < executionList.length; i += 1) {
         const command = executionList[i];
-        const waitMs = parseWaitMs(command);
-        if (waitMs !== null) {
-          await sleep(waitMs);
-          results.push({ command, response: `ok (wait ${waitMs / 1000}s)` });
+        const waitSeconds = parseWaitSeconds(command);
+        if (waitSeconds !== null) {
+          await sleep(waitSeconds * 1000);
+          results.push({ command, response: `ok (wait ${waitSeconds}s)` });
           continue;
         }
 
