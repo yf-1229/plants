@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telliyaki Blockly</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>Telliyaki Blockly</h1>
+        <p>スマホブラウザでTelloコマンドをブロックから作成して実行します。</p>
+      </header>
+
+      <section class="controls">
+        <button id="convertBtn" type="button">コマンド変換</button>
+        <button id="executeBtn" type="button">実行</button>
+      </section>
+
+      <section class="workspace-section">
+        <div id="blocklyDiv"></div>
+      </section>
+
+      <section class="output">
+        <h2>生成コマンド</h2>
+        <textarea id="commandOutput" readonly></textarea>
+        <h2>実行ログ</h2>
+        <pre id="logOutput"></pre>
+      </section>
+    </main>
+
+    <xml id="toolbox" style="display: none">
+      <category name="Tello" colour="200">
+        <block type="tello_takeoff"></block>
+        <block type="tello_land"></block>
+        <block type="tello_rotate">
+          <field name="DIRECTION">cw</field>
+          <field name="DEGREE">90</field>
+        </block>
+        <block type="tello_move">
+          <field name="DIRECTION">forward</field>
+          <field name="DISTANCE">50</field>
+        </block>
+      </category>
+    </xml>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

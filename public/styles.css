@@ -1,0 +1,85 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #f5f6f8;
+  color: #101418;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100vh;
+  padding: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+p {
+  margin: 6px 0 0;
+  font-size: 0.95rem;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: #0d6efd;
+}
+
+button#executeBtn {
+  background: #198754;
+}
+
+.workspace-section {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 50vh;
+}
+
+#blocklyDiv {
+  width: 100%;
+  height: 50vh;
+}
+
+.output {
+  display: grid;
+  gap: 6px;
+}
+
+.output h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+#commandOutput,
+#logOutput {
+  width: 100%;
+  min-height: 100px;
+  border-radius: 8px;
+  border: 1px solid #ccd1d8;
+  padding: 8px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+#logOutput {
+  white-space: pre-wrap;
+}
