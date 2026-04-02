@@ -3,6 +3,7 @@ const commandOutput = document.getElementById('commandOutput');
 const logOutput = document.getElementById('logOutput');
 const convertBtn = document.getElementById('convertBtn');
 const executeBtn = document.getElementById('executeBtn');
+const emergencyBtn = document.getElementById('emergencyBtn');
 
 Blockly.defineBlocksWithJsonArray([
   {
@@ -75,6 +76,7 @@ Blockly.defineBlocksWithJsonArray([
 
 const workspace = Blockly.inject(blocklyDiv, {
   toolbox: document.getElementById('toolbox'),
+  media: '/vendor/blockly/media/',
   trashcan: true,
   move: {
     scrollbars: true,
@@ -153,6 +155,28 @@ ws.addEventListener('message', (event) => {
   }
 });
 
+async function triggerEmergencyStop() {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      type: 'execute',
+      commands: ['emergency']
+    }));
+    appendLog('緊急停止送信(WebSocket)');
+    return;
+  }
+
+  const response = await fetch('/api/emergency', {
+    method: 'POST'
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  appendLog(`緊急停止送信(HTTP): ${data.response}`);
+}
+
 convertBtn.addEventListener('click', () => {
   const commands = collectCommands();
   setCommands(commands);
@@ -178,4 +202,12 @@ executeBtn.addEventListener('click', () => {
     commands
   }));
   appendLog(`実行送信: ${commands.length} 件`);
+});
+
+emergencyBtn.addEventListener('click', async () => {
+  try {
+    await triggerEmergencyStop();
+  } catch (error) {
+    appendLog(`緊急停止失敗: ${error instanceof Error ? error.message : 'unknown error'}`);
+  }
 });

@@ -58,7 +58,20 @@ function sendUdpCommand(command: string, timeoutMs = 5000): Promise<string> {
   return result;
 }
 
+app.use('/vendor/blockly', express.static(path.join(__dirname, '..', 'node_modules', 'blockly')));
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+app.post('/api/emergency', async (_req, res) => {
+  try {
+    const response = await sendUdpCommand('emergency');
+    res.json({ ok: true, response });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      message: error instanceof Error ? error.message : 'Emergency stop failed'
+    });
+  }
+});
 
 const server = app.listen(port, '0.0.0.0', () => {
   console.log(`Server started: http://0.0.0.0:${port}`);

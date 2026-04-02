@@ -19,6 +19,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "blockly": "^12.5.1",
     "express": "^5.2.1",
     "ws": "^8.20.0"
   },
