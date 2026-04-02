@@ -13,6 +13,7 @@ const localUdpPort = Number(process.env.LOCAL_UDP_PORT ?? 9000);
 
 const udpSocket = dgram.createSocket('udp4');
 udpSocket.bind(localUdpPort);
+let udpQueue: Promise<void> = Promise.resolve();
 
 const allowedPattern = /^(command|takeoff|land|stop|emergency|cw\s\d+|ccw\s\d+|forward\s\d+|back\s\d+|left\s\d+|right\s\d+|up\s\d+|down\s\d+|flip\s[lrfb])$/;
 
@@ -20,7 +21,7 @@ function isCommandAllowed(command: string): boolean {
   return allowedPattern.test(command.trim());
 }
 
-function sendUdpCommand(command: string, timeoutMs = 5000): Promise<string> {
+function sendUdpCommandInternal(command: string, timeoutMs = 5000): Promise<string> {
   return new Promise((resolve, reject) => {
     const message = Buffer.from(command, 'utf-8');
 
@@ -49,6 +50,12 @@ function sendUdpCommand(command: string, timeoutMs = 5000): Promise<string> {
       }
     });
   });
+}
+
+function sendUdpCommand(command: string, timeoutMs = 5000): Promise<string> {
+  const result = udpQueue.then(() => sendUdpCommandInternal(command, timeoutMs));
+  udpQueue = result.then(() => undefined, () => undefined);
+  return result;
 }
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
