@@ -8,6 +8,12 @@
     <script src="/vendor/blockly/blockly.min.js"></script>
   </head>
   <body>
+    <section class="telemetry-bar">
+      <div class="telemetry-item">速度: <span id="telemetrySpeed">--</span> cm/s</div>
+      <div class="telemetry-item">バッテリー: <span id="telemetryBattery">--</span> %</div>
+      <div class="telemetry-item">飛行時間: <span id="telemetryTime">--</span> s</div>
+      <div class="telemetry-item">Wi-Fi S/N: <span id="telemetryWifi">--</span></div>
+    </section>
     <main class="container">
       <header>
         <h1>Telliyaki Blockly</h1>
@@ -36,16 +42,22 @@
       <category name="Tello" colour="200">
         <block type="tello_takeoff"></block>
         <block type="tello_land"></block>
+        <block type="tello_repeat">
+          <field name="TIMES">2</field>
+        </block>
         <block type="tello_rotate">
           <field name="DIRECTION">cw</field>
           <field name="DEGREE">90</field>
         </block>
-        <block type="tello_move">
-          <field name="DIRECTION">forward</field>
-          <field name="DISTANCE">50</field>
-        </block>
+        <block type="tello_forward"><field name="DISTANCE">50</field></block>
+        <block type="tello_back"><field name="DISTANCE">50</field></block>
+        <block type="tello_left"><field name="DISTANCE">50</field></block>
+        <block type="tello_right"><field name="DISTANCE">50</field></block>
+        <block type="tello_up"><field name="DISTANCE">50</field></block>
+        <block type="tello_down"><field name="DISTANCE">50</field></block>
+        <block type="tello_flip"></block>
         <block type="tello_wait">
-          <field name="SECONDS">3</field>
+          <field name="SECONDS">1</field>
         </block>
       </category>
     </xml>
