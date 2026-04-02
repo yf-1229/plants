@@ -170,7 +170,14 @@ async function triggerEmergencyStop() {
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+    let detail = '';
+    try {
+      const errorData = await response.json();
+      detail = errorData?.message ? `: ${errorData.message}` : '';
+    } catch {
+      detail = response.statusText ? `: ${response.statusText}` : '';
+    }
+    throw new Error(`HTTP ${response.status}${detail}`);
   }
 
   const data = await response.json();
