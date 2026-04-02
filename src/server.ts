@@ -13,8 +13,53 @@ const localUdpPort = Number(process.env.LOCAL_UDP_PORT ?? 9000);
 const defaultCommandIntervalMs = Number(process.env.DEFAULT_COMMAND_INTERVAL_MS ?? 3000);
 
 const udpSocket = dgram.createSocket('udp4');
-udpSocket.bind(localUdpPort);
 let udpQueue: Promise<void> = Promise.resolve();
+let udpSocketRunning = false;
+let udpSocketInitError: Error | null = null;
+let resolveUdpReady: (() => void) | null = null;
+
+const udpReadyPromise = new Promise<void>((resolve) => {
+  resolveUdpReady = resolve;
+});
+
+udpSocket.once('listening', () => {
+  udpSocketRunning = true;
+  udpSocketInitError = null;
+  resolveUdpReady?.();
+  resolveUdpReady = null;
+});
+
+udpSocket.on('error', (error) => {
+  udpSocketInitError = error;
+  resolveUdpReady?.();
+  resolveUdpReady = null;
+});
+
+udpSocket.on('close', () => {
+  udpSocketRunning = false;
+  udpSocketInitError = new Error('UDP socket has been closed');
+});
+
+udpSocket.bind(localUdpPort);
+
+function getUdpUnavailableMessage(): string {
+  if (udpSocketInitError) {
+    return `UDP socket is closed or failed to initialize. Cannot send command: ${udpSocketInitError.message}`;
+  }
+  return 'UDP socket is closed or not initialized. Cannot send command.';
+}
+
+function sendUdpCommand(command: string, timeoutMs = 5000): Promise<string> {
+  const result = udpQueue.then(async () => {
+    await udpReadyPromise;
+    if (!udpSocketRunning) {
+      throw new Error(getUdpUnavailableMessage());
+    }
+    return sendUdpCommandInternal(command, timeoutMs);
+  });
+  udpQueue = result.then(() => undefined, () => undefined);
+  return result;
+}
 
 const allowedPattern = /^(command|takeoff|land|stop|emergency|cw\s\d+|ccw\s\d+|forward\s\d+|back\s\d+|left\s\d+|right\s\d+|up\s\d+|down\s\d+|flip\s[lrfb]|wait\s\d+)$/;
 
@@ -51,12 +96,6 @@ function sendUdpCommandInternal(command: string, timeoutMs = 5000): Promise<stri
       }
     });
   });
-}
-
-function sendUdpCommand(command: string, timeoutMs = 5000): Promise<string> {
-  const result = udpQueue.then(() => sendUdpCommandInternal(command, timeoutMs));
-  udpQueue = result.then(() => undefined, () => undefined);
-  return result;
 }
 
 function sleep(ms: number): Promise<void> {
