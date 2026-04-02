@@ -221,7 +221,7 @@ function collectCommandsFromChain(startBlock) {
     } else if (current.type === 'tello_repeat') {
       const times = Number(current.getFieldValue('TIMES'));
       const statement = current.getInputTargetBlock('DO');
-      if (statement && Number.isFinite(times) && times > 0) {
+      if (statement && Number.isFinite(times)) {
         const repeated = collectCommandsFromChain(statement);
         for (let i = 0; i < times; i += 1) {
           commands.push(...repeated);
