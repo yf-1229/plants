@@ -1,0 +1,32 @@
+{
+  "name": "telliyaki",
+  "version": "1.0.0",
+  "description": "Smartphone browser Blockly app for Tello via WebSocket-to-UDP bridge",
+  "main": "dist/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "node ./scripts/tsc.cjs --noEmit",
+    "build:emit": "node ./scripts/tsc.cjs",
+    "start": "npm run build:emit && node dist/server.js",
+    "check": "node ./scripts/tsc.cjs --noEmit"
+  },
+  "keywords": [
+    "tello",
+    "blockly",
+    "typescript",
+    "udp"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "blockly": "^12.5.1",
+    "express": "^5.2.1",
+    "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.6.1",
+    "@types/ws": "^8.18.1",
+    "typescript": "^6.0.2"
+  }
+}
