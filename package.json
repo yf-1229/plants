@@ -5,9 +5,10 @@
   "main": "dist/server.js",
   "type": "commonjs",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
-    "check": "tsc -p tsconfig.json --noEmit"
+    "build": "node ./scripts/tsc.cjs --noEmit",
+    "build:emit": "node ./scripts/tsc.cjs",
+    "start": "npm run build:emit && node dist/server.js",
+    "check": "node ./scripts/tsc.cjs --noEmit"
   },
   "keywords": [
     "tello",
