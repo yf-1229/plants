@@ -328,8 +328,7 @@ function requestLocation() {
       latestLocation = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy,
-        timestamp: position.timestamp
+        accuracy: position.coords.accuracy
       };
       updateLocationDisplay();
       setRoadStatus('現在地を更新しました');
@@ -356,7 +355,7 @@ function loadRoadPosts() {
       return [];
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.slice(0, MAX_ROAD_POSTS) : [];
   } catch {
     return [];
   }
@@ -364,8 +363,7 @@ function loadRoadPosts() {
 
 function saveRoadPosts() {
   try {
-    const limitedPosts = roadPosts.slice(0, MAX_ROAD_POSTS);
-    localStorage.setItem('roadPosts', JSON.stringify(limitedPosts));
+    localStorage.setItem('roadPosts', JSON.stringify(roadPosts));
   } catch {
     setRoadStatus('保存容量の都合でローカル保存できませんでした', true);
   }
@@ -438,7 +436,14 @@ function createRoadPostId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint32Array(2);
+    crypto.getRandomValues(bytes);
+    return `${Date.now()}-${bytes[0].toString(16)}${bytes[1].toString(16)}`;
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}-${Math.random()
+    .toString(16)
+    .slice(2)}`;
 }
 
 async function updateImagePreview(file) {
