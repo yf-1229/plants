@@ -50,6 +50,35 @@ p {
   gap: 8px;
 }
 
+.location-section,
+.road-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.location-section h2,
+.road-section h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.location-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.location-coords {
+  font-size: 0.9rem;
+  color: #2f3640;
+  word-break: break-word;
+}
+
 button {
   border: 0;
   border-radius: 8px;
@@ -66,6 +95,107 @@ button#executeBtn {
 
 button#emergencyBtn {
   background: #dc3545;
+}
+
+.road-form {
+  display: grid;
+  gap: 8px;
+}
+
+.road-form textarea {
+  width: 100%;
+  min-height: 88px;
+  border-radius: 8px;
+  border: 1px solid #ccd1d8;
+  padding: 8px;
+  font-size: 0.95rem;
+}
+
+.road-form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.road-file {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #6c757d;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.road-file input {
+  display: none;
+}
+
+.road-location-label {
+  font-size: 0.85rem;
+  color: #5c636a;
+}
+
+.road-location {
+  font-size: 0.9rem;
+  color: #101418;
+}
+
+.road-image-preview img,
+.road-post img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.road-image-preview {
+  min-height: 0;
+}
+
+.road-status {
+  font-size: 0.85rem;
+  color: #0d6efd;
+}
+
+.road-status.error {
+  color: #dc3545;
+}
+
+.road-posts {
+  display: grid;
+  gap: 10px;
+}
+
+.road-post {
+  border: 1px solid #e0e4ea;
+  border-radius: 12px;
+  padding: 10px;
+  background: #fafbfc;
+  display: grid;
+  gap: 6px;
+}
+
+.road-post-header {
+  display: grid;
+  gap: 2px;
+  font-size: 0.85rem;
+  color: #5c636a;
+}
+
+.road-post p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.road-empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #5c636a;
 }
 
 .workspace-section {
