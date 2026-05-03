@@ -434,6 +434,13 @@ function readImageFile(file) {
   });
 }
 
+function createRoadPostId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 async function updateImagePreview(file) {
   roadImagePreview.textContent = '';
   if (!file) {
@@ -489,7 +496,7 @@ roadPostBtn.addEventListener('click', async () => {
   }
 
   const post = {
-    id: `${Date.now()}`,
+    id: createRoadPostId(),
     description,
     imageData,
     location: latestLocation ? { ...latestLocation } : null,
