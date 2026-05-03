@@ -434,9 +434,7 @@ function readImageFile(file) {
   });
 }
 
-roadImageInput.addEventListener('change', () => {
-  setRoadStatus('');
-  const file = roadImageInput.files?.[0];
+async function updateImagePreview(file) {
   roadImagePreview.textContent = '';
   if (!file) {
     return;
@@ -446,18 +444,21 @@ roadImageInput.addEventListener('change', () => {
     roadImageInput.value = '';
     return;
   }
-  const reader = new FileReader();
-  reader.onload = () => {
+  try {
+    const imageData = await readImageFile(file);
     const image = document.createElement('img');
-    image.src = reader.result;
+    image.src = imageData;
     image.alt = '選択した画像';
-    roadImagePreview.textContent = '';
     roadImagePreview.appendChild(image);
-  };
-  reader.onerror = () => {
+  } catch {
     setRoadStatus('画像の読み込みに失敗しました', true);
-  };
-  reader.readAsDataURL(file);
+  }
+}
+
+roadImageInput.addEventListener('change', () => {
+  setRoadStatus('');
+  const file = roadImageInput.files?.[0] ?? null;
+  void updateImagePreview(file);
 });
 
 roadPostBtn.addEventListener('click', async () => {
