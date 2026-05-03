@@ -8,6 +8,16 @@ const telemetrySpeed = document.getElementById('telemetrySpeed');
 const telemetryBattery = document.getElementById('telemetryBattery');
 const telemetryTime = document.getElementById('telemetryTime');
 const telemetryWifi = document.getElementById('telemetryWifi');
+const locationStatus = document.getElementById('locationStatus');
+const locationBtn = document.getElementById('locationBtn');
+const locationCoords = document.getElementById('locationCoords');
+const roadDescription = document.getElementById('roadDescription');
+const roadImageInput = document.getElementById('roadImage');
+const roadPostBtn = document.getElementById('roadPostBtn');
+const roadLocationLabel = document.getElementById('roadLocationLabel');
+const roadImagePreview = document.getElementById('roadImagePreview');
+const roadStatus = document.getElementById('roadStatus');
+const roadPostsContainer = document.getElementById('roadPosts');
 
 Blockly.defineBlocksWithJsonArray([
   {
@@ -269,6 +279,244 @@ ws.addEventListener('message', (event) => {
     appendLog(`受信: ${event.data}`);
   }
 });
+
+const MAX_ROAD_POSTS = 20;
+let latestLocation = null;
+let roadPosts = loadRoadPosts();
+
+function setRoadStatus(message, isError = false) {
+  roadStatus.textContent = message;
+  roadStatus.classList.toggle('error', isError);
+}
+
+function formatLocation(location) {
+  const latitude = Number(location.latitude);
+  const longitude = Number(location.longitude);
+  const accuracy = Number(location.accuracy);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return '不明';
+  }
+  const accuracyLabel = Number.isFinite(accuracy) ? ` (±${Math.round(accuracy)}m)` : '';
+  return `緯度 ${latitude.toFixed(6)}, 経度 ${longitude.toFixed(6)}${accuracyLabel}`;
+}
+
+function updateLocationDisplay() {
+  if (latestLocation) {
+    locationStatus.textContent = '取得済み';
+    locationCoords.textContent = formatLocation(latestLocation);
+    roadLocationLabel.textContent = formatLocation(latestLocation);
+    return;
+  }
+  locationStatus.textContent = '未取得';
+  locationCoords.textContent = '--';
+  roadLocationLabel.textContent = '未取得';
+}
+
+function requestLocation() {
+  if (!navigator.geolocation) {
+    locationStatus.textContent = '未対応';
+    locationCoords.textContent = 'この端末では利用できません';
+    roadLocationLabel.textContent = '未対応';
+    locationBtn.disabled = true;
+    return;
+  }
+  locationStatus.textContent = '取得中...';
+  locationCoords.textContent = '取得中...';
+  setRoadStatus('');
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      latestLocation = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+        timestamp: position.timestamp
+      };
+      updateLocationDisplay();
+      setRoadStatus('現在地を更新しました');
+    },
+    (error) => {
+      latestLocation = null;
+      locationStatus.textContent = '取得失敗';
+      locationCoords.textContent = error.message || '取得に失敗しました';
+      roadLocationLabel.textContent = '未取得';
+      setRoadStatus('現在地を取得できませんでした', true);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+}
+
+function loadRoadPosts() {
+  try {
+    const raw = localStorage.getItem('roadPosts');
+    if (!raw) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRoadPosts() {
+  try {
+    const limitedPosts = roadPosts.slice(0, MAX_ROAD_POSTS);
+    localStorage.setItem('roadPosts', JSON.stringify(limitedPosts));
+  } catch {
+    setRoadStatus('保存容量の都合でローカル保存できませんでした', true);
+  }
+}
+
+function renderRoadPosts() {
+  roadPostsContainer.textContent = '';
+  if (roadPosts.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'road-empty';
+    empty.textContent = '投稿がまだありません';
+    roadPostsContainer.appendChild(empty);
+    return;
+  }
+  for (const post of roadPosts) {
+    const card = document.createElement('article');
+    card.className = 'road-post';
+
+    const header = document.createElement('div');
+    header.className = 'road-post-header';
+
+    const timeLabel = document.createElement('div');
+    const date = new Date(post.createdAt);
+    timeLabel.textContent = Number.isNaN(date.getTime())
+      ? '投稿日時不明'
+      : date.toLocaleString();
+    header.appendChild(timeLabel);
+
+    if (post.location) {
+      const locationLabel = document.createElement('div');
+      locationLabel.textContent = formatLocation(post.location);
+      header.appendChild(locationLabel);
+    }
+
+    card.appendChild(header);
+
+    if (post.description) {
+      const body = document.createElement('p');
+      body.textContent = post.description;
+      card.appendChild(body);
+    }
+
+    if (post.imageData) {
+      const image = document.createElement('img');
+      image.src = post.imageData;
+      image.alt = '道路情報画像';
+      card.appendChild(image);
+    }
+
+    roadPostsContainer.appendChild(card);
+  }
+}
+
+function clearRoadForm() {
+  roadDescription.value = '';
+  roadImageInput.value = '';
+  roadImagePreview.textContent = '';
+}
+
+function readImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
+    reader.readAsDataURL(file);
+  });
+}
+
+roadImageInput.addEventListener('change', () => {
+  setRoadStatus('');
+  const file = roadImageInput.files?.[0];
+  roadImagePreview.textContent = '';
+  if (!file) {
+    return;
+  }
+  if (!file.type.startsWith('image/')) {
+    setRoadStatus('画像ファイルを選択してください', true);
+    roadImageInput.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const image = document.createElement('img');
+    image.src = reader.result;
+    image.alt = '選択した画像';
+    roadImagePreview.textContent = '';
+    roadImagePreview.appendChild(image);
+  };
+  reader.onerror = () => {
+    setRoadStatus('画像の読み込みに失敗しました', true);
+  };
+  reader.readAsDataURL(file);
+});
+
+roadPostBtn.addEventListener('click', async () => {
+  setRoadStatus('');
+  const description = roadDescription.value.trim();
+  const file = roadImageInput.files?.[0] ?? null;
+
+  if (!description && !file) {
+    setRoadStatus('本文または画像を入力してください', true);
+    return;
+  }
+
+  if (file && !file.type.startsWith('image/')) {
+    setRoadStatus('画像ファイルを選択してください', true);
+    return;
+  }
+
+  roadPostBtn.disabled = true;
+  let imageData = null;
+  if (file) {
+    try {
+      imageData = await readImageFile(file);
+    } catch {
+      setRoadStatus('画像の読み込みに失敗しました', true);
+      roadPostBtn.disabled = false;
+      return;
+    }
+  }
+
+  const post = {
+    id: `${Date.now()}`,
+    description,
+    imageData,
+    location: latestLocation ? { ...latestLocation } : null,
+    createdAt: new Date().toISOString()
+  };
+
+  roadPosts = [post, ...roadPosts].slice(0, MAX_ROAD_POSTS);
+  renderRoadPosts();
+  saveRoadPosts();
+  clearRoadForm();
+  setRoadStatus('投稿しました');
+  roadPostBtn.disabled = false;
+});
+
+locationBtn.addEventListener('click', () => {
+  requestLocation();
+});
+
+if (!navigator.geolocation) {
+  locationStatus.textContent = '未対応';
+  locationCoords.textContent = 'この端末では利用できません';
+  roadLocationLabel.textContent = '未対応';
+  locationBtn.disabled = true;
+} else {
+  updateLocationDisplay();
+}
+
+renderRoadPosts();
 
 async function triggerEmergencyStop() {
   if (ws.readyState === WebSocket.OPEN) {

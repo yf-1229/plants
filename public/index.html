@@ -26,6 +26,39 @@
         <button id="emergencyBtn" type="button">緊急停止</button>
       </section>
 
+      <section class="location-section">
+        <h2>現在地</h2>
+        <div class="location-status">
+          <span id="locationStatus">未取得</span>
+          <button id="locationBtn" type="button">現在地を取得</button>
+        </div>
+        <div id="locationCoords" class="location-coords">--</div>
+      </section>
+
+      <section class="road-section">
+        <h2>道路情報投稿</h2>
+        <div class="road-form">
+          <textarea
+            id="roadDescription"
+            placeholder="道路状況や気づいたことを入力"
+          ></textarea>
+          <div class="road-form-row">
+            <label class="road-file">
+              <span>画像を選択</span>
+              <input id="roadImage" type="file" accept="image/*" />
+            </label>
+            <button id="roadPostBtn" type="button">投稿</button>
+          </div>
+          <div class="road-form-row">
+            <span class="road-location-label">現在地:</span>
+            <span id="roadLocationLabel" class="road-location">未取得</span>
+          </div>
+          <div id="roadImagePreview" class="road-image-preview"></div>
+          <div id="roadStatus" class="road-status" aria-live="polite"></div>
+        </div>
+        <div id="roadPosts" class="road-posts"></div>
+      </section>
+
       <section class="workspace-section">
         <div id="blocklyDiv"></div>
       </section>
